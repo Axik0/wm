@@ -1,0 +1,94 @@
+#:kivy 2.1.0
+
+<MainPage>:
+    cols:1
+    rows:4
+
+    Button:
+        text: 'Load image'
+        on_release: root.show_load()
+
+    Accordion:
+        orientation: 'vertical'
+
+        AccordionItem:
+            title: "Use custom image as a watermark"
+            Button:
+                text: 'Load your watermark image'
+                on_release: root.show_load()
+        AccordionItem:
+            title: "Use custom text as a watermark"
+            BoxLayout:
+                orientation: "vertical"
+                TextInput:
+                    multiline: False
+
+                BoxLayout:
+                    orientation: "vertical"
+                    Slider:
+                        id: opacity_sl
+                        range: (0, 255)
+                        step: 8
+                        value: 128
+                        value_track: True
+                        value_track_color: [0, 0, 1, 1]
+                    Label:
+                        text: str(round(opacity_sl.value_normalized*100)) + '% (opacity)'
+                Button:
+                    text: 'Submit'
+
+    Image:
+        source: 'okacho.jpg'
+        size: self.texture.size
+
+    Button:
+        text: 'Save result'
+        on_release: root.show_save()
+
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+
+        FileChooserListView:
+            id: filechooser
+            filters: ['*.png','*.jpg']
+            path: './'
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
+
+<SaveDialog>:
+    text_input: text_input
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+
+        FileChooserListView:
+            id: filechooser
+            path: '.'
+            on_selection: text_input.text = self.selection[0] or ''
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 30
+            multiline: False
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+            Button:
+                text: "Save"
+                on_release: root.save(filechooser.path, text_input.text)
