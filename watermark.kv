@@ -1,11 +1,11 @@
 #:kivy 2.1.0
 
 
-
 <MainPage>:
     cols:1
     rows:4
-    size: (1500,500)
+
+
     Button:
         size_hint: (1, 0.1)
         text: 'Load image'
@@ -49,9 +49,10 @@
                     text: 'Submit'
                     on_press: root.text_wm(wm_text_line.text, opacity_sl.value)
 
-    Image:
+    ImageBtn:
         source: 'okacho.jpg'
         size_hint: (1, 0.5)
+        on_press: root.img_click(self.texture.size, self.size, self.pos)
 
     Button:
         size_hint: (1, 0.1)
