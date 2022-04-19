@@ -25,6 +25,7 @@ class MainPage(GridLayout):
     loaded_image = ObjectProperty(None)
     result_image = ObjectProperty(None)
 
+
     def text_wm(self, text, opacity):
         print(text)
         print(opacity)
