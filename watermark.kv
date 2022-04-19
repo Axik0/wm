@@ -1,14 +1,18 @@
 #:kivy 2.1.0
 
+
+
 <MainPage>:
     cols:1
     rows:4
-
+    size: (1500,500)
     Button:
+        size_hint: (1, 0.1)
         text: 'Load image'
         on_release: root.show_load()
 
     Accordion:
+        size_hint: (1, 0.3)
         orientation: 'vertical'
 
         AccordionItem:
@@ -20,10 +24,16 @@
             title: "Use custom text as a watermark"
             BoxLayout:
                 orientation: "vertical"
+
                 TextInput:
+                    id: wm_text_line
+                    focus: True
+                    hint_text: "Input something here"
+                    size_hint: (1, 0.3)
                     multiline: False
 
                 BoxLayout:
+                    size_hint: (1, 0.4)
                     orientation: "vertical"
                     Slider:
                         id: opacity_sl
@@ -35,13 +45,16 @@
                     Label:
                         text: str(round(opacity_sl.value_normalized*100)) + '% (opacity)'
                 Button:
+                    size_hint: (1, 0.3)
                     text: 'Submit'
+                    on_press: root.text_wm(wm_text_line.text, opacity_sl.value)
 
     Image:
         source: 'okacho.jpg'
-        size: self.texture.size
+        size_hint: (1, 0.5)
 
     Button:
+        size_hint: (1, 0.1)
         text: 'Save result'
         on_release: root.show_save()
 

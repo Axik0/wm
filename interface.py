@@ -9,9 +9,13 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
+from kivy.core.window import Window
 
 
 class Watermark(App):
+    # Window.minimum_height = 700
+    # Window.minimum_width = 100
+    Window.size = (400, 800)
     def build(self):
         return MainPage()
 
@@ -20,6 +24,10 @@ class MainPage(GridLayout):
     # looks like we can leave properties without def init and self.* at the beginning but they will work the same way
     loaded_image = ObjectProperty(None)
     result_image = ObjectProperty(None)
+
+    def text_wm(self, text, opacity):
+        print(text)
+        print(opacity)
 
     def show_load(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
