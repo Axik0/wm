@@ -24,25 +24,34 @@ class MainPage(GridLayout):
     # looks like we can leave properties without def init and self.* at the beginning but they will work the same way
     loaded_image = ObjectProperty(None)
     result_image = ObjectProperty(None)
-
+    wm_coordinates = ObjectProperty(None)
 
     def img_click(self, image_size, img_container_size, offset):
         """we assume that our image fits square container by width or height"""
         global_coord = Window.mouse_pos
-        print('click', img_container_size, Window.mouse_pos)
         img_proportion = image_size[0]/image_size[1]
+        int_cont_coord = [global_coord[_] - offset[_] for _ in range(2)]
         if img_proportion >= 1:
             filler_ds = (0, round(abs(img_container_size[0] * (1 - 1/img_proportion)))/2)
+            inf_crop = filler_ds[1]
+            sup_crop = img_container_size[1] - filler_ds[1]
         else:
             filler_ds = (round(abs(img_container_size[0] * (1 - img_proportion)))/2, 0)
-        print(filler_ds)
-        int_cont_coord = [global_coord[_] - offset[_] for _ in range(2)]
-        print(int_cont_coord)
-        # intr_img_coord = [int_cont_coord[_] - filler_ds[_] for _ in range(2) if filler_ds]
+            inf_crop = filler_ds[0]
+            sup_crop = img_container_size[0] - filler_ds[0]
+        if inf_crop < int_cont_coord[0] < sup_crop or inf_crop < int_cont_coord[1] < sup_crop:
+            self.wm_coordinates = [int_cont_coord[_] - filler_ds[_] for _ in range(2)]
+            print(self.wm_coordinates)
+
+    def main_img_load(self):
+        self.main_img.source = 'test.jpg'
+
 
     def text_wm(self, text, opacity):
         print(text)
         print(opacity)
+        self.ids.main_img.source = 'test.jpg'
+        print(self.ids)
 
     def show_load(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
