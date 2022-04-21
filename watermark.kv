@@ -9,7 +9,7 @@
     Button:
         size_hint: (1, 0.1)
         text: 'Load image'
-        on_release: root.show_load()
+        on_release: root.main_img_load()
 
     Accordion:
         size_hint: (1, 0.3)
@@ -48,12 +48,22 @@
                     size_hint: (1, 0.3)
                     text: 'Submit'
                     on_press: root.text_wm(wm_text_line.text, opacity_sl.value)
-
-    ImageBtn:
-        id: main_img
-        source: 'okacho.jpg'
+    FloatLayout:
         size_hint: (1, 0.5)
-        on_press: root.img_click(self.texture.size, self.size, self.pos)
+        ImageBtn:
+            id: main_img
+            source: 'okacho.jpg'
+            on_press: root.img_click(self.texture.size, self.size, self.pos)
+            size_hint: (1, 1)
+            pos_hint: {"x": 0, 'y': 0}
+        Label:
+            id: text_wm
+            size_hint: (0.1, 0.1)
+        Image:
+            id: img_wm
+            opacity: 0
+            size_hint: (0.1, 0.1)
+
 
     Button:
         size_hint: (1, 0.1)
