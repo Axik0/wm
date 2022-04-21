@@ -11,6 +11,7 @@ from kivy.uix.popup import Popup
 from kivy.core.window import Window
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
+from kivy.core.image import Image as CoreImage
 
 class Watermark(App):
     Window.minimum_height = 600
@@ -29,52 +30,52 @@ class MainPage(GridLayout):
     def test(self, arg):
         print(arg)
 
-    def img_coord_calc(self, global_coord, image_size, img_container_size, offset):
+    def img_coord_calc(self, global_coord, inscr_image_size, img_container_size, offset):
         """When we click on our image area, we get some raw_coord related to the whole app window.
         This method transforms those to the local coordinates of some point of current image.
         We assume that our window has default size and each image fits its square container automatically.
-        Usage of round function results in <0.5px inaccuracy for our filler calc which is also assumed negligible"""
+        Usage of round function results in 0.5px inaccuracy for our filler calc which is also assumed negligible"""
         # first, note that our image is superseded by one button (starting from the very bottom)
         int_cont_coord = [global_coord[_] - offset[_] for _ in range(2)]
-        # as we can't get width and height to compare, let's use full_resolution to get proportion
-        img_proportion = image_size[0]/image_size[1]
         # we assume that our image fits square container by width or height
-        if img_proportion >= 1:
+        if inscr_image_size[0] >= inscr_image_size[1]:
             # horizontal fit case, we have two equal top and bottom filler stripes surrounding our image
-            filler_ds = (0, round(abs(img_container_size[0] * (1 - 1/img_proportion)))/2)
+            filler_ds = (0, (img_container_size[1]-inscr_image_size[1])/2)
             inf_crop = filler_ds[1]
             sup_crop = img_container_size[1] - filler_ds[1]
         else:
             # vertical fit case, left and right filler stripes
-            filler_ds = (round(abs(img_container_size[0] * (1 - img_proportion)))/2, 0)
+            filler_ds = ((img_container_size[0]-inscr_image_size[0])/2, 0)
             inf_crop = filler_ds[0]
             sup_crop = img_container_size[0] - filler_ds[0]
         # we don't need anything except our image, that's why we should apply a condition first
         if inf_crop < int_cont_coord[0] < sup_crop or inf_crop < int_cont_coord[1] < sup_crop:
-            self.wm_coordinates = [int_cont_coord[_] - filler_ds[_] for _ in range(2)]
+            self.wm_coordinates = [round(int_cont_coord[_] - filler_ds[_]) for _ in range(2)]
             # print(self.wm_coordinates)
 
-    def img_click(self, image_size, img_container_size, offset):
+    def img_click(self, inscr_image_size, img_container_size, offset):
         global_coords = Window.mouse_pos
-        self.img_coord_calc(global_coords, image_size, img_container_size, offset)
+        self.img_coord_calc(global_coords, inscr_image_size, img_container_size, offset)
 
-        self.ids.text_wm.text = 'WWWW'
         self.ids.text_wm.pos = global_coords
-        print(global_coords)
 
-        self.ids.text_wm.source = 'test.jpg'
-        self.ids.text_wm.opacity = 1
-        self.ids.text_wm.pos = global_coords
+        self.ids.img_wm.pos = global_coords
+
 
     def main_img_load(self):
         self.show_load()
         self.ids.main_img.source = 'test.jpg'
         print(self.loaded_image)
 
+    def img_wm(self):
+        self.show_load()
+        self.ids.img_wm.source = self.loaded_image
+        # self.ids.img_wm.opacity = 0.5
+        print(self.loaded_image)
+
     def text_wm(self, text, opacity):
-        print(text)
-        print(opacity)
-        self.ids.main_img.source = 'test.jpg'
+        self.ids.text_wm.text = text
+        self.ids.text_wm.color[3] = opacity/255
 
     def show_load(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
@@ -85,6 +86,9 @@ class MainPage(GridLayout):
         content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
         self._popup = Popup(title="Save image", content=content, size_hint=(0.9, 0.9))
         self._popup.open()
+        # self.ids.main_img.source = 'result.jpg'
+        # self.ids.text_wm.text = ''
+        # self.ids.img_wm.opacity = 0
 
     def dismiss_popup(self):
         self._popup.dismiss()
@@ -92,6 +96,8 @@ class MainPage(GridLayout):
     def load(self, path, filename):
         with open(os.path.join(path, filename[0]), 'rb') as stream:
             self.loaded_image = stream.read()
+        testim = CoreImage(self.loaded_image, ext='jpg')
+        texttest = testim.texture
         self.dismiss_popup()
 
     def save(self, path, filename):

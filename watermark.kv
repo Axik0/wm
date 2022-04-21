@@ -50,15 +50,22 @@
                     on_press: root.text_wm(wm_text_line.text, opacity_sl.value)
     FloatLayout:
         size_hint: (1, 0.5)
+
         ImageBtn:
             id: main_img
             source: 'okacho.jpg'
-            on_press: root.img_click(self.texture.size, self.size, self.pos)
+            on_press: root.img_click(self.norm_image_size, self.size, self.pos)
             size_hint: (1, 1)
             pos_hint: {"x": 0, 'y': 0}
         Label:
             id: text_wm
-            size_hint: (0.1, 0.1)
+            size_hint: (0.8, self.font_size/main_img.size[1])
+            text_size: self.size
+            strip: True
+            shorten: True
+            shorten_from: 'right'
+            halign: 'left'
+            valign: 'bottom'
         Image:
             id: img_wm
             opacity: 0
