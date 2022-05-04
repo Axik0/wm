@@ -6,12 +6,14 @@ import kivy
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.properties import ObjectProperty
+from kivy.properties import ObjectProperty, BooleanProperty
 from kivy.uix.popup import Popup
 from kivy.core.window import Window
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 from kivy.core.image import Image as CoreImage
+
+from PIL import Image as Img, ImageFont, ImageDraw
 
 class Watermark(App):
     Window.minimum_height = 600
@@ -23,7 +25,7 @@ class Watermark(App):
 
 class MainPage(GridLayout):
     # looks like we can leave properties without def init and self.* at the beginning but they will work the same way
-    loaded_image = ObjectProperty(None)
+    temp_image_texture = ObjectProperty(None)
     result_image = ObjectProperty(None)
     wm_coordinates = ObjectProperty(None)
 
@@ -58,28 +60,19 @@ class MainPage(GridLayout):
         self.img_coord_calc(global_coords, inscr_image_size, img_container_size, offset)
 
         self.ids.text_wm.pos = global_coords
-
         self.ids.img_wm.pos = global_coords
-
-
-    def main_img_load(self):
-        self.show_load()
-        self.ids.main_img.source = 'test.jpg'
-        print(self.loaded_image)
-
-    def img_wm(self):
-        self.show_load()
-        self.ids.img_wm.source = self.loaded_image
-        # self.ids.img_wm.opacity = 0.5
-        print(self.loaded_image)
 
     def text_wm(self, text, opacity):
         self.ids.text_wm.text = text
         self.ids.text_wm.color[3] = opacity/255
 
-    def show_load(self):
-        content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
-        self._popup = Popup(title="Load image (jpg or png)", content=content, size_hint=(0.9, 0.9))
+    def show_load(self, action_type):
+        content = LoadDialog(a_type=action_type, load=self.load, cancel=self.dismiss_popup)
+        if action_type:
+            popup_text = "Load watermark image (jpg or png)"
+        else:
+            popup_text = "Load main image (jpg or png)"
+        self._popup = Popup(title=popup_text, content=content, size_hint=(0.9, 0.9))
         self._popup.open()
 
     def show_save(self):
@@ -90,15 +83,20 @@ class MainPage(GridLayout):
         # self.ids.text_wm.text = ''
         # self.ids.img_wm.opacity = 0
 
-    def dismiss_popup(self):
+    def dismiss_popup(self, action_type=None):
         self._popup.dismiss()
+        if action_type is not None:
+            if action_type:
+                self.ids.img_wm.texture = self.temp_image_texture
+                self.ids.img_wm.opacity = 0.5
+            else:
+                self.ids.main_img.texture = self.temp_image_texture
 
-    def load(self, path, filename):
+    def load(self, action_type, path, filename):
         with open(os.path.join(path, filename[0]), 'rb') as stream:
-            self.loaded_image = stream.read()
-        testim = CoreImage(self.loaded_image, ext='jpg')
-        texttest = testim.texture
-        self.dismiss_popup()
+            loaded_image = io.BytesIO(stream.read())
+        self.temp_image_texture = CoreImage(loaded_image, ext='png').texture
+        self.dismiss_popup(action_type)
 
     def save(self, path, filename):
         with open(os.path.join(path, filename), 'w') as stream:
@@ -109,6 +107,7 @@ class MainPage(GridLayout):
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
+    a_type = BooleanProperty(None)
 
 
 class SaveDialog(FloatLayout):

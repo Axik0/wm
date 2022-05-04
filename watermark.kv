@@ -9,7 +9,7 @@
     Button:
         size_hint: (1, 0.1)
         text: 'Load image'
-        on_release: root.main_img_load()
+        on_release: root.show_load(0)
 
     Accordion:
         size_hint: (1, 0.3)
@@ -19,7 +19,7 @@
             title: "Use custom image as a watermark"
             Button:
                 text: 'Load your watermark image'
-                on_release: root.show_load()
+                on_release: root.show_load(1)
         AccordionItem:
             title: "Use custom text as a watermark"
             BoxLayout:
@@ -96,7 +96,7 @@
                 on_release: root.cancel()
             Button:
                 text: "Load"
-                on_release: root.load(filechooser.path, filechooser.selection)
+                on_release: root.load(root.a_type, filechooser.path, filechooser.selection)
 
 <SaveDialog>:
     text_input: text_input
