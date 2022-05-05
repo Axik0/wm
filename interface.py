@@ -30,19 +30,13 @@ class MainPage(GridLayout):
     loaded_image = ObjectProperty(None)
     main_image = ObjectProperty(None)
     wm_image = ObjectProperty(None)
-    wm_image_mult = NumericProperty(0.1)
+    wm_image_cfg = ObjectProperty([(40, 40), 128])
     wm_text = StringProperty(None)
-    wm_text_opacity = NumericProperty(None)
+    wm_text_cfg = NumericProperty(None)
     wm_coordinates = ObjectProperty(None)
 
 
-    def img_coord_calc(self, global_coord, inscr_image_size, img_container_size, offset):
-        """When we click on our image area, we get some raw_coord related to the whole app window.
-        This method transforms those to the local coordinates of some point of current image.
-        We assume that our window has default size and each image fits its square container automatically.
-        Usage of round function results in 0.5px inaccuracy for our filler calc which is also assumed negligible"""
-        # first, note that our image is superseded by one button (starting from the very bottom)
-        int_cont_coord = [global_coord[_] - offset[_] for _ in range(2)]
+    def img_filler_calc(self, inscr_image_size, img_container_size):
         # we assume that our image fits square container by width or height
         if inscr_image_size[0] >= inscr_image_size[1]:
             # horizontal fit case, we have two equal top and bottom filler stripes surrounding our image
@@ -54,21 +48,40 @@ class MainPage(GridLayout):
             filler_ds = ((img_container_size[0]-inscr_image_size[0])/2, 0)
             inf_crop = filler_ds[0]
             sup_crop = img_container_size[0] - filler_ds[0]
+        return filler_ds, inf_crop, sup_crop
+
+    def img_coord_calc(self, global_coord, inscr_image_size, img_container_size, offset):
+        """When we click on our image area, we get some raw_coord related to the whole app window.
+        This method transforms those to the local coordinates of some point of current image.
+        We assume that our window has default size and each image fits its square container automatically.
+        Usage of round function results in 0.5px inaccuracy for our filler calc which is also assumed negligible"""
+        # first, note that our image is superseded by one button (starting from the very bottom)
+        int_cont_coord = [global_coord[_] - offset[_] for _ in range(2)]
+        filler_ds, inf_crop, sup_crop = self.img_filler_calc(inscr_image_size, img_container_size)
         # we don't need anything except our image, that's why we should apply a condition first
         if inf_crop < int_cont_coord[0] < sup_crop or inf_crop < int_cont_coord[1] < sup_crop:
             self.wm_coordinates = [[round(int_cont_coord[_] - filler_ds[_]) for _ in range(2)], inscr_image_size]
-            print(self.wm_coordinates)
+
     def img_click(self, inscr_image_size, img_container_size, offset):
         global_coords = Window.mouse_pos
-        print(self.ids.img_wm.size, 111)
         self.img_coord_calc(global_coords, inscr_image_size, img_container_size, offset)
 
         self.ids.text_wm.pos = (global_coords[0], global_coords[1]-self.ids.text_wm.size[1])
-        self.ids.img_wm.pos = (global_coords[0], global_coords[1]-self.ids.img_wm.size[1])
+
+        # let's get rid of any fillers in our GUI visualisation before placing a watermark image
+        wmi = self.ids.img_wm
+        filler = self.img_filler_calc(wmi.norm_image_size, wmi.size)[0]
+        # subtract left/top filler before we place our image
+        # kivy places image differently (over click - kivy vs under click - PIL), we convert to PIL way
+        wmi.pos = (global_coords[0] - filler[0], global_coords[1] - filler[1] - wmi.size[1])
+        # wmi's visible size is a (fixed) factor of main image container size
+        # don't forget to subtract any fillers if present, PIL processor doesn't use those
+        self.wm_image_cfg[0] = [wmi.size_hint[_]-2*filler[_]/img_container_size[_] for _ in range(2)]
+
 
     def text_wm(self, text, opacity):
         self.wm_text = self.ids.text_wm.text = text
-        self.wm_text_opacity = opacity
+        self.wm_text_cfg = opacity
         self.ids.text_wm.color[3] = opacity/255
 
     def show_load(self, action_type):
@@ -83,7 +96,7 @@ class MainPage(GridLayout):
     def show_save(self):
         """temporarily used for image processing"""
         from main import process
-        process(self.main_image, self.wm_coordinates, self.wm_image, self.wm_image_mult, self.wm_text, self.wm_text_opacity)
+        process(self.main_image, self.wm_coordinates, self.wm_image, self.wm_image_cfg, self.wm_text, self.wm_text_cfg)
 
     # def show_save(self):
     #     content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
