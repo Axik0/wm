@@ -1,5 +1,5 @@
 from PIL import Image, ImageFont, ImageDraw
-
+import io
 
 def img_filler_calc(inscr_image_size, img_container_size):
     """this aux function serves as filler calculator as we want to use it twice"""
@@ -18,13 +18,15 @@ def img_filler_calc(inscr_image_size, img_container_size):
 
 
 def process(main_image, coordinates, wm_image, wm_image_cfg, wm_text=None, wm_text_cfg=None):
+    """Main image processor. Takes two images or creates one for text watermark itself.
+    Result is enclosed into buffer (bytesIO object) for transfer purpose, not yet saved to file"""
     base = Image.open(main_image).convert("RGBA")
     if wm_text is None:
         wm = Image.open(wm_image).convert("RGBA")
         # we are going to synchronise wm image size with our visualisation via 2 factors in cfg[0]
         wm = wm.resize((int(base.width*wm_image_cfg[0][0]), int(base.height*wm_image_cfg[0][1])))
-        # this method sets alpha layer of a whole watermark image as we need, before composition
-        wm.putalpha(wm_image_cfg[1])
+        # for jpg this method sets an alpha layer of a whole watermark image, unused because breaks png_pics
+        # wm.putalpha(wm_image_cfg[1])
     else:
         ch_font = ImageFont.truetype(wm_text_cfg[0], wm_text_cfg[1])
         # measure dimensions of a box with our text with a font given
@@ -36,6 +38,6 @@ def process(main_image, coordinates, wm_image, wm_image_cfg, wm_text=None, wm_te
         d.text((0, 0), text=wm_text, font=ch_font, anchor="lt", fill=(255, 255, 255, int(wm_text_cfg[2])))
     position = (int(coordinates[0][0]/coordinates[1][0]*base.size[0]), base.size[1] - int(coordinates[0][1]/coordinates[1][1]*base.size[1]))
     base.alpha_composite(wm, dest=position)
-    base.show()
-    # result = base.convert('RGB')
-    # result.save("name.jpg")
+    res = io.BytesIO()
+    base.convert('RGB').save(res, format='JPEG')
+    return res
