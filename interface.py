@@ -65,18 +65,23 @@ class MainPage(GridLayout):
     def img_click(self, inscr_image_size, img_container_size, offset):
         global_coords = Window.mouse_pos
         self.img_coord_calc(global_coords, inscr_image_size, img_container_size, offset)
-
-        self.ids.text_wm.pos = (global_coords[0], global_coords[1]-self.ids.text_wm.size[1])
-
-        # let's get rid of any fillers in our GUI visualisation before placing a watermark image
-        wmi = self.ids.img_wm
-        filler = self.img_filler_calc(wmi.norm_image_size, wmi.size)[0]
-        # subtract left/top filler before we place our image
-        # kivy places image differently (over click - kivy vs under click - PIL), we convert to PIL way
-        wmi.pos = (global_coords[0] - filler[0], global_coords[1] - filler[1] - wmi.size[1])
-        # wmi's visible size is a (fixed) factor of main image container size
-        # don't forget to subtract any fillers if present, PIL processor doesn't use those
-        self.wm_image_cfg[0] = [wmi.size_hint[_]-2*filler[_]/img_container_size[_] for _ in range(2)]
+        # let's split text and image watermark cases basing on presence of any submitted text in a field
+        if self.ids.text_wm.text is "":
+            # let's get rid of any fillers in our GUI visualisation before placing a watermark image
+            wmi = self.ids.img_wm
+            filler = self.img_filler_calc(wmi.norm_image_size, wmi.size)[0]
+            # subtract left/top filler before we place our image
+            # kivy places image differently (over click - kivy vs under click - PIL), we convert to PIL way
+            wmi.pos = (global_coords[0] - filler[0], global_coords[1] - filler[1] - wmi.size[1])
+            # wmi's visible size is a (fixed) factor of main image container size
+            # don't forget to subtract any fillers if present, PIL processor doesn't use those
+            self.wm_image_cfg[0] = [wmi.size_hint[_]-2*filler[_]/img_container_size[_] for _ in range(2)]
+        else:
+            # hide any image watermark if it has been placed previously
+            self.ids.img_wm.opacity = 0
+            print(self.ids.text_wm.size)
+            # also convert y-coordinate to comply with an actual PIL placement way
+            self.ids.text_wm.pos = (global_coords[0], global_coords[1] - self.ids.text_wm.size[1])
 
 
     def text_wm(self, text, opacity):

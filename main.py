@@ -16,7 +16,7 @@ def process(main_image, coordinates, wm_image, wm_image_cfg, wm_text=None, wm_te
     else:
         # measure dimensions of a box with our text with a font given
         text_size = ch_font.getsize(wm_text)
-        # print(ch_text_size)
+        print(text_size, 1111)
         # first, create blank image, don't matter what's the fill but zero opacity
         wm = Image.new('RGBA', size=text_size, color=(255, 255, 255, 0))
         # then we draw a single text line on top of that with nonzero opacity, left-top anchor alignment
