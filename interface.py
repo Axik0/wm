@@ -30,6 +30,7 @@ class MainPage(GridLayout):
     loaded_image = ObjectProperty(None)
     main_image = ObjectProperty(None)
     wm_image = ObjectProperty(None)
+    wm_image_mult = NumericProperty(0.1)
     wm_text = StringProperty(None)
     wm_text_opacity = NumericProperty(None)
     wm_coordinates = ObjectProperty(None)
@@ -57,13 +58,13 @@ class MainPage(GridLayout):
         if inf_crop < int_cont_coord[0] < sup_crop or inf_crop < int_cont_coord[1] < sup_crop:
             self.wm_coordinates = [[round(int_cont_coord[_] - filler_ds[_]) for _ in range(2)], inscr_image_size]
             print(self.wm_coordinates)
-
     def img_click(self, inscr_image_size, img_container_size, offset):
         global_coords = Window.mouse_pos
+        print(self.ids.img_wm.size, 111)
         self.img_coord_calc(global_coords, inscr_image_size, img_container_size, offset)
 
-        self.ids.text_wm.pos = global_coords
-        self.ids.img_wm.pos = global_coords
+        self.ids.text_wm.pos = (global_coords[0], global_coords[1]-self.ids.text_wm.size[1])
+        self.ids.img_wm.pos = (global_coords[0], global_coords[1]-self.ids.img_wm.size[1])
 
     def text_wm(self, text, opacity):
         self.wm_text = self.ids.text_wm.text = text
@@ -82,7 +83,7 @@ class MainPage(GridLayout):
     def show_save(self):
         """temporarily used for image processing"""
         from main import process
-        process(self.main_image, self.wm_coordinates, self.wm_image, self.wm_text, self.wm_text_opacity)
+        process(self.main_image, self.wm_coordinates, self.wm_image, self.wm_image_mult, self.wm_text, self.wm_text_opacity)
 
     # def show_save(self):
     #     content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
