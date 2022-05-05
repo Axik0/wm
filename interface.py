@@ -13,7 +13,7 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 from kivy.core.image import Image as CoreImage
 
-from PIL import Image as Img, ImageFont, ImageDraw
+from main import process, img_filler_calc
 
 
 class Watermark(App):
@@ -32,23 +32,8 @@ class MainPage(GridLayout):
     wm_image = ObjectProperty(None)
     wm_image_cfg = ObjectProperty([(40, 40), 128])
     wm_text = StringProperty(None)
-    wm_text_cfg = NumericProperty(None)
+    wm_text_cfg = ObjectProperty(["arial.ttf", 40, 128])
     wm_coordinates = ObjectProperty(None)
-
-
-    def img_filler_calc(self, inscr_image_size, img_container_size):
-        # we assume that our image fits square container by width or height
-        if inscr_image_size[0] >= inscr_image_size[1]:
-            # horizontal fit case, we have two equal top and bottom filler stripes surrounding our image
-            filler_ds = (0, (img_container_size[1]-inscr_image_size[1])/2)
-            inf_crop = filler_ds[1]
-            sup_crop = img_container_size[1] - filler_ds[1]
-        else:
-            # vertical fit case, left and right filler stripes
-            filler_ds = ((img_container_size[0]-inscr_image_size[0])/2, 0)
-            inf_crop = filler_ds[0]
-            sup_crop = img_container_size[0] - filler_ds[0]
-        return filler_ds, inf_crop, sup_crop
 
     def img_coord_calc(self, global_coord, inscr_image_size, img_container_size, offset):
         """When we click on our image area, we get some raw_coord related to the whole app window.
@@ -57,7 +42,7 @@ class MainPage(GridLayout):
         Usage of round function results in 0.5px inaccuracy for our filler calc which is also assumed negligible"""
         # first, note that our image is superseded by one button (starting from the very bottom)
         int_cont_coord = [global_coord[_] - offset[_] for _ in range(2)]
-        filler_ds, inf_crop, sup_crop = self.img_filler_calc(inscr_image_size, img_container_size)
+        filler_ds, inf_crop, sup_crop = img_filler_calc(inscr_image_size, img_container_size)
         # we don't need anything except our image, that's why we should apply a condition first
         if inf_crop < int_cont_coord[0] < sup_crop or inf_crop < int_cont_coord[1] < sup_crop:
             self.wm_coordinates = [[round(int_cont_coord[_] - filler_ds[_]) for _ in range(2)], inscr_image_size]
@@ -69,24 +54,28 @@ class MainPage(GridLayout):
         if self.ids.text_wm.text is "":
             # let's get rid of any fillers in our GUI visualisation before placing a watermark image
             wmi = self.ids.img_wm
-            filler = self.img_filler_calc(wmi.norm_image_size, wmi.size)[0]
+            filler = img_filler_calc(wmi.norm_image_size, wmi.size)[0]
             # subtract left/top filler before we place our image
             # kivy places image differently (over click - kivy vs under click - PIL), we convert to PIL way
             wmi.pos = (global_coords[0] - filler[0], global_coords[1] - filler[1] - wmi.size[1])
             # wmi's visible size is a (fixed) factor of main image container size
-            # don't forget to subtract any fillers if present, PIL processor doesn't use those
+            # subtract any fillers if present, PIL processor doesn't use those
             self.wm_image_cfg[0] = [wmi.size_hint[_]-2*filler[_]/img_container_size[_] for _ in range(2)]
         else:
-            # hide any image watermark if it has been placed previously
-            self.ids.img_wm.opacity = 0
-            print(self.ids.text_wm.size)
             # also convert y-coordinate to comply with an actual PIL placement way
             self.ids.text_wm.pos = (global_coords[0], global_coords[1] - self.ids.text_wm.size[1])
 
+    def clear_watermarks(self):
+        """removes (hides) any watermark (text/image) if it exists"""
+        self.ids.img_wm.opacity = 0
+        self.ids.text_wm.text = ""
 
     def text_wm(self, text, opacity):
+        self.clear_watermarks()
         self.wm_text = self.ids.text_wm.text = text
-        self.wm_text_cfg = opacity
+        self.ids.text_wm.font_size = self.wm_text_cfg[1]*\
+                                     self.ids.main_img.size[1]/min(self.ids.main_img.texture_size[0], self.ids.main_img.texture_size[1])
+        self.wm_text_cfg[2] = opacity
         self.ids.text_wm.color[3] = opacity/255
 
     def show_load(self, action_type):
@@ -100,8 +89,9 @@ class MainPage(GridLayout):
 
     def show_save(self):
         """temporarily used for image processing"""
-        from main import process
-        process(self.main_image, self.wm_coordinates, self.wm_image, self.wm_image_cfg, self.wm_text, self.wm_text_cfg)
+        # proceed only if there are 2 images to process at least
+        if self.main_image is not None and self.wm_coordinates is not None:
+            process(self.main_image, self.wm_coordinates, self.wm_image, self.wm_image_cfg, self.wm_text, self.wm_text_cfg)
 
     # def show_save(self):
     #     content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
@@ -114,10 +104,11 @@ class MainPage(GridLayout):
     def dismiss_popup(self, action_type=None):
         self._popup.dismiss()
         if action_type is not None:
+            self.clear_watermarks()
             if action_type:
                 self.wm_image = self.loaded_image
                 self.ids.img_wm.texture = self.temp_image_tx
-                self.ids.img_wm.opacity = 0.5
+                self.ids.img_wm.opacity = self.wm_image_cfg[1]/255
             else:
                 self.main_image = self.loaded_image
                 self.ids.main_img.texture = self.temp_image_tx
@@ -152,4 +143,3 @@ class ImageBtn(ButtonBehavior, Image):
 
 if __name__ == '__main__':
     Watermark().run()
-
