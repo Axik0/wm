@@ -7,7 +7,6 @@ from main import process, img_filler_calc
 # has to be prior to any other kivy framework import
 from kivy import Config
 Config.set('graphics', 'resizable', False)
-
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
@@ -108,11 +107,11 @@ class MainPage(GridLayout):
             self.clear_watermarks()
             if action_type:
                 self.wm_image = self.loaded_image
-                self.wm_text_cfg[1] = self.fs_mult * self.ids.img_wm.texture_size[0]
                 self.ids.img_wm.texture = self.temp_image_tx
                 self.ids.img_wm.opacity = self.wm_image_cfg[1] / 255
             else:
                 self.main_image = self.loaded_image
+                self.wm_text_cfg[1] = self.fs_mult * self.ids.img_wm.texture_size[0]
                 self.ids.main_img.texture = self.temp_image_tx
 
     def load(self, action_type, path, filename):
