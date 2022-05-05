@@ -36,6 +36,7 @@ def process(main_image, coordinates, wm_image, wm_image_mult, wm_text=None, wm_t
     if wm_text is None:
         wm = Image.open(wm_image).convert("RGBA")
         wm = wm.resize((int(wm.width*wm_image_mult), int(wm.height*wm_image_mult)))
+        wm.putalpha(128)
     else:
         # measure dimensions of a box with our text with a font given
         text_size = ch_font.getsize(wm_text)
