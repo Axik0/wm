@@ -36,10 +36,11 @@ class MainPage(GridLayout):
     wm_text = StringProperty(None)
     wm_coordinates = ObjectProperty(None)
     # this is the only place where we set up extra wm preferences(the other values are dependent)
-    wm_image_cfg = ObjectProperty([(40, 40), 128])
+    wm_image_cfg = ObjectProperty([(40, 40), 255])
     wm_text_cfg = ObjectProperty(["arial.ttf", 40, 128])
     # comfortable watermark size multiplier
     fs_mult = 0.04
+    is_mult = 0.06
 
     def img_coord_calc(self, global_coord, inscr_image_size, img_container_size, offset):
         """When we click on our image area, we get some raw_coord related to the whole app window.
